@@ -5457,7 +5457,8 @@ static int perf_swevent_add(struct perf_event *event, int flags)
 
 static void perf_swevent_del(struct perf_event *event, int flags)
 {
-	hlist_del_rcu(&event->hlist_entry);
+	if(!hlist_unhashed(&event->hlist_entry))
+		hlist_del_rcu(&event->hlist_entry);
 }
 
 static void perf_swevent_start(struct perf_event *event, int flags)
@@ -5520,7 +5521,6 @@ static int swevent_hlist_get_cpu(struct perf_event *event, int cpu)
 	int err = 0;
 
 	mutex_lock(&swhash->hlist_mutex);
-
 	if (!swevent_hlist_deref(swhash) && cpu_online(cpu)) {
 		struct swevent_hlist *hlist;
 
@@ -6737,6 +6737,9 @@ SYSCALL_DEFINE5(perf_event_open,
 	if (err)
 		return err;
 
+	if (attr.__reserved_1)
+		return -EINVAL;
+
 	if (!attr.exclude_kernel) {
 		if (perf_paranoid_kernel() && !capable(CAP_SYS_ADMIN))
 			return -EACCES;
@@ -7611,14 +7614,7 @@ static void perf_event_exit_cpu_context(int cpu)
 
 static void perf_event_exit_cpu(int cpu)
 {
-	struct swevent_htable *swhash = &per_cpu(swevent_htable, cpu);
-
 	perf_event_exit_cpu_context(cpu);
-
-	mutex_lock(&swhash->hlist_mutex);
-	swhash->online = false;
-	swevent_hlist_release(swhash);
-	mutex_unlock(&swhash->hlist_mutex);
 }
 #else
 static inline void perf_event_exit_cpu(int cpu) { }
