@@ -3,7 +3,8 @@ To build this kernel, google's toolchain failed yet we can use Linaro 6.1 (Thank
 The toolchain is named Linaro-6.1-Aarch64-Linux-gnu.tar.gz
 
 Environment:
-sudo apt-get install bc flex bison gperf build-essential curl zlib1g-dev g++-multilib g++-4.4-multilib libc6-dev-i386 lib32ncurses5-dev ia32-libs x11proto-core-dev libx11-dev lib32readline5-dev lib32z1-dev mingw32 tofrodos 
+Ubuntu 14.04
+sudo apt-get install bc libncurses5-dev 
 
 To use default config for NetHunter:
 $make kali_defconfig
