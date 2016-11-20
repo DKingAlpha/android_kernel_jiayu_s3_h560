@@ -65,8 +65,6 @@ struct f_hidg {
 };
 
 
-// HID patch begin
-
 /* Hacky device list to fix f_hidg_write being called after device destroyed.
    It covers only most common race conditions, there will be rare crashes anyway. */
 enum { HACKY_DEVICE_LIST_SIZE = 4 };
@@ -103,8 +101,6 @@ static int hacky_device_list_check(struct f_hidg *hidg)
 	}
 	return 1;
 }
-
-// HID patch end
 
 
 
@@ -223,12 +219,12 @@ static ssize_t f_hidg_read(struct file *file, char __user *buffer,
 
 	if (!access_ok(VERIFY_WRITE, buffer, count))
 		return -EFAULT;
-// HID patch begin
+
 	if (hacky_device_list_check(hidg)) {
 		pr_err("%s: trying to read from device %p that was destroyed\n", __func__, hidg);
 		return -EIO;
 	}
-// HID patch end
+
 	spin_lock_irqsave(&hidg->spinlock, flags);
 
 #define READ_COND (!list_empty(&hidg->completed_out_req))
@@ -353,7 +349,6 @@ static unsigned int f_hidg_poll(struct file *file, poll_table *wait)
 	struct f_hidg	*hidg  = file->private_data;
 	unsigned int	ret = 0;
 
-// HID patch if
 	if (hacky_device_list_check(hidg)) {
 		pr_err("%s: trying to poll device %p that was destroyed\n", __func__, hidg);
 		return -EIO;
@@ -361,7 +356,6 @@ static unsigned int f_hidg_poll(struct file *file, poll_table *wait)
 
 	poll_wait(file, &hidg->read_queue, wait);
 
-// HID patch if
 	if (hacky_device_list_check(hidg)) {
 		pr_err("%s: trying to poll device %p that was destroyed\n", __func__, hidg);
 		return -EIO;
