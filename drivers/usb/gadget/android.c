@@ -51,7 +51,7 @@
 #include "f_ecm.c"
 #include "f_eem.c"
 #include "u_ether.c"
-//HID patch
+
 #include "f_hid.h"
 #include "f_hid_android_keyboard.c"
 #include "f_hid_android_mouse.c"
@@ -1811,7 +1811,6 @@ static struct android_usb_function audio_source_function = {
 	.attributes	= audio_source_function_attributes,
 };
 
-//HID PATCH BEGIN
 static int hid_function_init(struct android_usb_function *f, struct usb_composite_dev *cdev)
 {
 	return ghid_setup(cdev->gadget, 2);
@@ -1847,8 +1846,6 @@ static struct android_usb_function hid_function = {
 	.bind_config= hid_function_bind_config,
 };
 
-
-//HID PATCH END
 
 static struct android_usb_function *supported_functions[] = {
 	&ffs_function,

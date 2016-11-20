@@ -19,7 +19,7 @@
 #include <linux/wait.h>
 #include <linux/sched.h>
 #include <linux/usb/g_hid.h>
-//HID patch
+
 #include <linux/delay.h>
 #include "f_hid.h"
 
@@ -465,7 +465,6 @@ static int hidg_setup(struct usb_function *f,
 	case ((USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
 		  | HID_REQ_GET_PROTOCOL):
 		VDBG(cdev, "get_protocol\n");
-// HID patch begin
 //		goto stall;
 		length = min_t(unsigned, length, 1);
 		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT)
@@ -484,7 +483,6 @@ static int hidg_setup(struct usb_function *f,
 	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8
 		  | HID_REQ_SET_PROTOCOL):
 		VDBG(cdev, "set_protocol\n");
-//HID patch begin
 		length = 0;
 		if (hidg->bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT) {
 			if (value == 0)/* Boot protocol */
@@ -493,7 +491,6 @@ static int hidg_setup(struct usb_function *f,
 			if (value == 1)/* Report protocol */
 				goto respond;
 		}
-// HID patch end
 		goto stall;
 		break;
 
@@ -643,14 +640,12 @@ const struct file_operations f_hidg_fops = {
 	.llseek		= noop_llseek,
 };
 
-// HID patch struct
 static int hidg_bind(struct usb_configuration *c, struct usb_function *f)
 {
 	struct usb_ep		*ep;
 	struct f_hidg		*hidg = func_to_hidg(f);
 	int			status;
 	dev_t			dev;
-// HID patch
 	pr_info("%s: creating device %p\n", __func__, hidg);
 
 	/* allocate instance-specific interface IDs, and patch descriptors */
@@ -718,7 +713,6 @@ static int hidg_bind(struct usb_configuration *c, struct usb_function *f)
 		goto fail;
 
 	device_create(hidg_class, NULL, dev, NULL, "%s%d", "hidg", hidg->minor);
-// HID patch
 	hacky_device_list_add(hidg);
 	return 0;
 
@@ -737,20 +731,18 @@ fail:
 static void hidg_unbind(struct usb_configuration *c, struct usb_function *f)
 {
 	struct f_hidg *hidg = func_to_hidg(f);
-// HID patch begin
 	pr_info("%s: destroying device %p\n", __func__, hidg);
 	/* This does not cover all race conditions, only most common one */
 	mutex_lock(&hidg->lock);
 	hacky_device_list_remove(hidg);
 	mutex_unlock(&hidg->lock);
-//HID patch end
 
 	device_destroy(hidg_class, MKDEV(major, hidg->minor));
 	cdev_del(&hidg->cdev);
 
 	/* disable/free request and end point */
 	usb_ep_disable(hidg->in_ep);
-// HID patch comment
+
 //	usb_ep_dequeue(hidg->in_ep, hidg->req);
 	kfree(hidg->req->buf);
 	usb_ep_free_request(hidg->in_ep, hidg->req);
